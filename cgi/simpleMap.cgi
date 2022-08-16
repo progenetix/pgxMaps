@@ -17,19 +17,18 @@ Documentation:
 
 Example:
 
-* https://progenetix.org/cgi/pgxMaps/cgi/simpleMap.cgi?file=https://raw.githubusercontent.com/progenetix/pgxMaps/main/rsrc/locationtest.txt&-map_bubble_stroke_weight=2&-map_marker_scale=10
+* https://progenetix.org/cgi/pgxMaps/cgi/simpleMap.cgi?file=https://raw.githubusercontent.com/progenetix/pgxMaps/main/rsrc/locationtest.tsv&-map_bubble_stroke_weight=2&-map_marker_scale=10
 
 =cut
 
 use strict;
-use LWP::UserAgent ();
 use CGI::Carp qw(fatalsToBrowser);
+use CGI qw(param multi_param);
 use Data::Dumper;
 
 BEGIN { unshift @INC, '../lib' };
 
 use readFiles;
-use setVars;
 use webStats;
 use plotGeomaps;
 
@@ -41,7 +40,12 @@ use plotGeomaps;
 
 my %args;
 
-%args = pgInitializeCGI(%args);
+$args{pgV} = {};
+# TODO: This needs a clean processing of allowed parameters!
+foreach my $key (param()) {
+	$args{pgV}->{$key} = param($key);
+}
+$args{google_params} = pgSendGoogleTracking();
 
 # print Dumper(%args);
 
@@ -50,43 +54,58 @@ my %args;
 my ($header, $table) = lib::readFiles::read_webfile_to_split_array( $args{pgV}->{file} );
 my @markers;
 
+# removing header line
 shift @$table;
 
+ 
+my $markers = {};
+
 foreach (@$table) {
-	my ($title, $lat, $lon, $size, $type) = @$_;
+
+	my ($group, $lat, $lon, $size, $label, $link, $markerType) = @$_;
 
 	if ($lat !~ /^\-?\d+?(?:\.\d+?)?$/) { next }
 	if ($lon !~ /^\-?\d+?(?:\.\d+?)?$/) { next }
 	if ($size !~ /^\d+?(?:\.\d+?)?$/) { $size = 1 }
 
+	my $m_k = $group."::".$lat."::".$lon;
+
 	# there are right now 2 marker types supported
 	# * circle, scaled through $size
 	# * marker
 	# if not given, falls back to the processing standard (circle if more than 1)
-	if (! grep{ $type eq $_ } qw(circle marker)) {
-		$type = "" }
+	if (! grep{ $markerType eq $_ } qw(circle marker)) {
+		$markerType = "" }
 
-	push( @markers, [ $title, $lat, $lon, $size, $type ] );
+	$markers->{$m_k}->{group} = $group;
+	$markers->{$m_k}->{lat} = $lat;
+	$markers->{$m_k}->{lon} = $lon;
+	$markers->{$m_k}->{type} = $markerType;
+	$markers->{$m_k}->{size} += $size;
+
+	if ($link =~ /http/) {
+		$label = '<a href="'.$link.'">'.$label.'</a>' }
+
+	push(@{$markers->{$m_k}->{items}}, $label);
+    # print Dumper($markers->{$m_k});
+
 }
 
-if (@markers < 1) {
-	push(
-		@markers,
-	 	[
-			'SimpleMap script CC BY 4.0 <a href="http://info.baudisgroup.org/group/Michael-Baudis/">Michael Baudis</a>.<br/>For more information see our websites...',
-			47.398,
-			8.549,
-			5000,
-			'marker'
-		]
-	);
+if (scalar keys %{ $markers } < 1) {
+	$markers = {
+		group => "Test",
+		lat => 47.398,
+		lon => 8.549,
+		size => 5000,
+		type => "marker"
+	}
 }
 
 ################################################################################
 
-$args{'-plottype'}  =   'map';
+$args{'-plottype'} = 'map';
 my $pgx = new lib::plotGeomaps(\%args);
-$pgx->{geomarkers} = \@markers;
+$pgx->{geomarkers} = $markers;
 $pgx->pgx_get_web_geomap();
 
 print <<END;

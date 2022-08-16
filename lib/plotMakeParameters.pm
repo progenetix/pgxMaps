@@ -9,7 +9,6 @@ require Exporter;
   args_modify_plot_parameters
   hex2rgb
   random_hexcolor
-  frequencies2rgb
 );
 
 ################################################################################
@@ -191,36 +190,5 @@ sub random_hexcolor {
   return('#'.sprintf("%x%x%x", shuffle(@randRGB)));
 
 }
-
-################################################################################
-
-sub frequencies2rgb {
-
-	my (
-		$plotPars,
-		$dupF,
-		$delF,
-		$maxF
-	) = @_;
-	if ($maxF < 0.001) {$maxF = 100}
-
-	my $dupRGB = hex2rgb($plotPars->{color_var_dup_hex});
-	my $delRGB = hex2rgb($plotPars->{color_var_del_hex});
-	my @RGB;
-
-	for my $i (0..2) {
-		$dupRGB->[$i] = int($dupRGB->[$i] * $dupF / $maxF);
-		$delRGB->[$i] = int($delRGB->[$i] * $delF / $maxF);
-		if (($dupRGB->[$i] + $delRGB->[$i]) < 255) {
-			$RGB[$i] = $dupRGB->[$i] + $delRGB->[$i] }
-		else {
-			$RGB[$i] = 255 }
-	}
-
-	return	join(',', @RGB);
-
-}
-
-
 
 1;

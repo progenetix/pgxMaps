@@ -5,6 +5,7 @@ sub pgSendGoogleTracking {
   use POSIX qw(strftime);
   use UUID::Tiny;
   use UUID::Tiny ':std';
+  use File::Basename;
  
   my $web_root = $ENV{ SERVER_NAME } =~ /\w\w\w/ ? $ENV{ SERVER_NAME } : 'progenetix.org';
   $web_root =~ s/\.\w\w\w\w?$/.org/;

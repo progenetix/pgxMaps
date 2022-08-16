@@ -5,7 +5,6 @@ use YAML::XS qw(LoadFile);
 
 use plotMakeParameters;
 use readFiles;
-use writeFiles;
 require Exporter;
 @ISA    =   qw(Exporter);
 @EXPORT =   qw(
@@ -45,10 +44,11 @@ sub _aggregate_geomarkers {
 
   my $markers = {};
   foreach my $g_m (@{$pgx->{geomarkers}}) {
-    my ($title, $lat, $lon, $size, $type) = @{$g_m};
+    my ($group, $lat, $lon, $size, $label, $link, $type) = @{$g_m};
     my $m_k = $lat."::".$lon;
     $markers->{$m_k}->{size} += $size;
-    # print Dumper($markers->{$m_k});
+    push(@{$markers->{$m_k}->{items}}, $label);
+    print Dumper($group, $label, $markers->{$m_k}->{size}, $markers->{$m_k}->{items});
   }
   # print Dumper(%$markers);
 
@@ -65,46 +65,47 @@ sub pgx_get_web_geomap {
 	my $pgx = shift;
 
 	# stop processing now if nothing to do
-	if ( scalar @{$pgx->{geomarkers}} < 1 ) {
+	if ( scalar keys %{ $pgx->{geomarkers} } < 1 ) {
 			return $pgx }
 
-  my $markers = $pgx->_aggregate_geomarkers();
+  my $markers = $pgx->{geomarkers};
 
 	# get max marker size
-	my @markerS = map{ $_->[3] } @{$markers};
+	my @markerS = map{ $markers->{$_}->{size} } keys %{$markers};
 	my $markerMax	= (sort {$b <=> $a} @markerS)[0];
 	if ($markerMax < 1) {
 		$markerMax = 1 }
   my $locsizeF = ( 50000000000 * $pgx->{parameters}->{map_marker_scale} / $markerMax );
-  if (@{$markers} < 2) {
+  if (keys %$markers < 2) {
   	$pgx->{parameters}->{map_marker_type} = 'marker' }
   	
   my @markersJs;
   
-  foreach my $marker (@{$markers}) {
+  foreach (keys %{$markers}) {
 
-    my ($title, $lat, $lon, $size, $type) = @{$marker};
+    my $m = $markers->{$_};
+    my $title = "<h4>".$m->{group}."</h4>";
 
-    $title .= '<hr/><a href="http://progenetix.org">link</a>';
+    if (@{$m->{items}} > 0) {
+      $title .= join("<br/>", @{$m->{items}}) }
 
-    if (! grep{ $type eq $_ } qw(circle marker)) {
-    	$type = $pgx->{parameters}->{map_marker_type} }
+    # print Dumper($m);
     
-  	if ($type eq 'marker') {
+  	if ($m->{type} eq 'marker') {
     	push @markersJs, qq!
-L.$type([$lat, $lon]).bindPopup('$title').addTo(map)
+L.marker([$m->{lat}, $m->{lon}]).bindPopup('$title').addTo(map)
         ! }
     else {
-    	my $radius 	= 	sprintf "%.0f", sqrt($size / 3.14 * $locsizeF);
+    	my $radius 	= 	sprintf "%.0f", sqrt($m->{size} / 3.14 * $locsizeF);
     	push @markersJs, qq!
-L.$type([$lat, $lon], {
+L.circle([$m->{lat}, $m->{lon}], {
     stroke: true,
     color: '$pgx->{parameters}->{map_bubble_stroke_color}',
     weight: $pgx->{parameters}->{map_bubble_stroke_weight},
     fillColor: '$pgx->{parameters}->{map_bubble_fill_color}',
     fillOpacity: $pgx->{parameters}->{map_bubble_opacity},
     radius: $radius,
-    count: $size
+    count: $m->{size}
 }).bindPopup('$title').addTo(map)
         !
       }  
