@@ -48,7 +48,7 @@ sub _aggregate_geomarkers {
     my ($title, $lat, $lon, $size, $type) = @{$g_m};
     my $m_k = $lat."::".$lon;
     $markers->{$m_k}->{size} += $size;
-    print Dumper($markers->{$m_k});
+    # print Dumper($markers->{$m_k});
   }
   # print Dumper(%$markers);
 

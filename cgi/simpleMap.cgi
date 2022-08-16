@@ -17,7 +17,7 @@ Documentation:
 
 Example:
 
-* https://progenetix.org/cgi/pgxMaps/cgi/simpleMap.cgi?file=https://www.dropbox.com/s/zqeecud795e9vp7/studenttable.txt?dl=0&-map_bubble_stroke_weight=2&-map_marker_scale=10
+* https://progenetix.org/cgi/pgxMaps/cgi/simpleMap.cgi?file=https://raw.githubusercontent.com/progenetix/pgxMaps/main/rsrc/locationtest.txt&-map_bubble_stroke_weight=2&-map_marker_scale=10
 
 =cut
 
@@ -33,7 +33,7 @@ use setVars;
 use webStats;
 use plotGeomaps;
 
-print "Content-type: text/plain\n\n";
+# print "Content-type: text/plain\n\n";
 
 ################################################################################
 # parameter defaults & modifications ###########################################
