@@ -1,85 +1,38 @@
 #
 ---
 paths:
-# the array base path is for the local system, with an implied structure of
-# dir_array_base_path/__genome__/__series_dir__/array__dir__/(files)
-  dir_array_base_path: '/Library/WebServer/Documents/Sites/arraymap'
 #  dir_tmp_base_path: '/Library/WebServer/Documents/tmp'
   dir_tmp_base_path: '/Library/WebServer/Documents/Sites/progenetix/tmp'
   web_tmp_base_path: '/tmp'
-  dir_ontology_maps: 'ICDOntologies/current'
+
 cgi:
   google_tid: UA-572981-2
   google_dt: Progenetix cancer genome profiling resource
-dataset_names:
-  - arraymap
-  - progenetix
-collection_names:
-  - variants
-  - callsets
-  - biosamples
-  - individuals
-  - biosubsets
-  - datacollections
-handover_db: progenetix
-handover_coll: querybuffer
 
-datacollections:
-  NCIT:
-    label: 'NCIt Neoplasm Code'
-    prefix: NCIT
-    pattern: '^(NCIT\:)?C\d+?$'
-    greedymatch: '^(NCIT\:)?C\d+?$'
-    samplefield: histological_diagnosis
-  icdom:
-    label: 'ICD-O 3 Morphology Code'
-    prefix: icdom
-    pattern: '^icdom\-\d{5}$'
-    greedymatch: '^icdom\-\d{1,5}$'
-    samplefield: icdo_morphology
-  icdot:
-    label: 'ICD-O 3 Organ Site Code'
-    prefix: icdot
-    pattern: '^icdot\-C\d{1,2}\.\d$'
-    greedymatch: '^icdot\-?C\d\d?(\.\d)?$'
-    samplefield: icdo_topography
-  UBERON:
-    label: 'Uberon cross-species anatomical structures ontology'
-    prefix: UBERON
-    pattern: '^UBERON([_\:]\d*?\-?)?$'
-    greedymatch: '^UBERON([_\:]\d*?\-?)?$'
-    samplefield: sampled_tissue
-  PMID:
-    label: 'Pubmed Publication'
-    prefix: PMID
-    pattern: '^PMID\:\d{6,8}$'
-    greedymatch: '^pubmed\:\d{1,8}$'
-    samplefield: external_references
-  cellosaurus:
-    label: 'Cellline ID'
-    prefix: cellosaurus
-    pattern: '^(cellosaurus\:)?CVCL_[A-Z0-9]{4}$'
-    greedymatch: '^(cellosaurus\:)?CVCL(_([A-Z0-9]{1,4})?)?$'
-    samplefield: external_references
-  geogse:
-    label: 'NCBI Gene Expression Omnibus series'
-    prefix: geo
-    pattern: '^geo\:GSE\d+?$'
-    greedymatch: '^geo\:GSE\d*?$'
-    samplefield: external_references
-  geogpl:
-    label: 'NCBI Gene Expression Omnibus platform'
-    prefix: geo
-    pattern: '^geo\:GPL\d+?$'
-    greedymatch: '^geo\:GPL\d*?$'
-    samplefield: external_references
-  egastudy:
-    label: 'EGA Study'
-    prefix: 'ega.study'
-    pattern: '^(ega.study\:)?EGAS\d{11}$'
-    greedymatch: '^(ega.study\:)?EGAS\d{1,11}$'
-    samplefield: external_references
+map_params:
 
-genome_assemblies:
-  - 'GRCh38'
-  
+## MapBox tiles (for-pay beyond a certain nr. of access per month)
+# tiles:  = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=...'
+# attribution: 'Imagery &copy; <a href="https://www.mapbox.com/">Mapbox</a>'
+# extra_JS: 'id: "mapbox.streets",'
+
+  plottype: map
+  plotid: map
+  canvas_w_px: 794
+  canvas_h_px: 480
+  bubble_stroke_color: '#dd6633'
+  bubble_stroke_weight: 1
+  bubble_fill_color: '#cc9966'
+  bubble_opacity: 0.4
+  tiles_source: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+  attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+  extra_JS: ""
+  marker_type: 'circle'
+  marker_scale: 2
+  latitude: 10.0
+  longitude: 35.0
+  zoom: 2
+  zoom_min: 2
+  zoom_max: 10
+  head: >-
+    <meta charset="utf-8">

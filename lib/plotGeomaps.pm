@@ -2,8 +2,6 @@ package lib::plotGeomaps;
 
 use Data::Dumper;
 use YAML::XS qw(LoadFile);
-
-use plotMakeParameters;
 use readFiles;
 require Exporter;
 @ISA    =   qw(Exporter);
@@ -17,15 +15,23 @@ require Exporter;
 ########    ####    ####    ####    ####    ####    ####    ####    ####    ####
 ########    ####    ####    ####    ####    ####    ####    ####    ####    ####
 
-
 sub new {
 
   my $class = shift;
   my $args = shift;
-  $args =   lib::plotMakeParameters::args_modify_plot_parameters(read_plot_defaults(), $args);
+  my $map_params = read_plot_defaults();
+
+  foreach my $param (keys %{$args}) {
+    if (grep{/^$param$/} keys %{$map_params}) {
+      my $p_v = $args->{$param};
+      if ($p_v =~ /\w/) {
+        $map_params->{$param} = $p_v }
+    }
+  }
+
   my $self = {
-    parameters => $args,
-    plotid => $args->{plotid},
+    parameters => $map_params,
+    plotid => $map_params->{plotid},
     map => q{},
   };
 
@@ -75,9 +81,9 @@ sub pgx_get_web_geomap {
 	my $markerMax	= (sort {$b <=> $a} @markerS)[0];
 	if ($markerMax < 1) {
 		$markerMax = 1 }
-  my $locsizeF = ( 50000000000 * $pgx->{parameters}->{map_marker_scale} / $markerMax );
+  my $locsizeF = ( 50000000000 * $pgx->{parameters}->{marker_scale} / $markerMax );
   if (keys %$markers < 2) {
-  	$pgx->{parameters}->{map_marker_type} = 'marker' }
+  	$pgx->{parameters}->{marker_type} = 'marker' }
   	
   my @markersJs;
   
@@ -100,10 +106,10 @@ L.marker([$m->{lat}, $m->{lon}]).bindPopup('$title').addTo(map)
     	push @markersJs, qq!
 L.circle([$m->{lat}, $m->{lon}], {
     stroke: true,
-    color: '$pgx->{parameters}->{map_bubble_stroke_color}',
-    weight: $pgx->{parameters}->{map_bubble_stroke_weight},
-    fillColor: '$pgx->{parameters}->{map_bubble_fill_color}',
-    fillOpacity: $pgx->{parameters}->{map_bubble_opacity},
+    color: '$pgx->{parameters}->{bubble_stroke_color}',
+    weight: $pgx->{parameters}->{bubble_stroke_weight},
+    fillColor: '$pgx->{parameters}->{bubble_fill_color}',
+    fillOpacity: $pgx->{parameters}->{bubble_opacity},
     radius: $radius,
     count: $m->{size}
 }).bindPopup('$title').addTo(map)
@@ -113,12 +119,12 @@ L.circle([$m->{lat}, $m->{lon}], {
   
   my $_markersJs 	= 	'' . join(';', @markersJs) . '';
 
-  $pgx->{map} = $pgx->{parameters}->{map_head};
+  $pgx->{map} = $pgx->{parameters}->{head};
 
   $pgx->{map} .= 	<< "__HTML__";
 
 <!-- map needs to exist before we load leaflet -->
-<div id="map-canvas" style="width: $pgx->{parameters}->{size_plotimage_w_px}px; height: $pgx->{parameters}->{size_plotimage_h_px}px;"></div>
+<div id="map-canvas" style="width: $pgx->{parameters}->{canvas_w_px}px; height: $pgx->{parameters}->{canvas_h_px}px;"></div>
 
 <!-- Make sure you put this AFTER Leaflet's CSS -->
 <script src="https://unpkg.com/leaflet\@1.8.0/dist/leaflet.js"
@@ -126,13 +132,13 @@ L.circle([$m->{lat}, $m->{lon}], {
       crossorigin=""></script>
 <script>
   // Create the map.
-  var map = L.map('map-canvas', { renderer: L.svg() } ).setView([$pgx->{parameters}->{map_latitude}, $pgx->{parameters}->{map_longitude}], $pgx->{parameters}->{map_zoom});
+  var map = L.map('map-canvas', { renderer: L.svg() } ).setView([$pgx->{parameters}->{latitude}, $pgx->{parameters}->{longitude}], $pgx->{parameters}->{zoom});
 
-  L.tileLayer('$pgx->{parameters}->{map_tiles}', {
-      minZoom: $pgx->{parameters}->{map_zoom_min},
-      maxZoom: $pgx->{parameters}->{map_zoom_max},
-      $pgx->{parameters}->{map_extra_JS}
-      attribution: '$pgx->{parameters}->{map_attribution}'
+  L.tileLayer('$pgx->{parameters}->{tiles_source}', {
+      minZoom: $pgx->{parameters}->{zoom_min},
+      maxZoom: $pgx->{parameters}->{zoom_max},
+      $pgx->{parameters}->{extra_JS}
+      attribution: '$pgx->{parameters}->{attribution}'
   }).addTo(map);
 
   $_markersJs;
@@ -148,8 +154,8 @@ __HTML__
 sub read_plot_defaults {
 
   my $path_of_this_module = File::Basename::dirname( eval { ( caller() )[1] } );
-  my $plotPars = LoadFile($path_of_this_module.'/../config/plotdefaults.yaml');
-  return $plotPars;
+  my $plotPars = LoadFile($path_of_this_module.'/../config/config.yaml');
+  return $plotPars->{map_params};
 
 }
 
