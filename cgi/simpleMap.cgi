@@ -45,7 +45,8 @@ $args{pgV} = {};
 foreach my $key (param()) {
 	$args{pgV}->{$key} = param($key);
 }
-$args{google_params} = pgSendGoogleTracking();
+
+pgSendGoogleTracking();
 
 # print Dumper(%args);
 
@@ -103,7 +104,6 @@ if (scalar keys %{ $markers } < 1) {
 
 ################################################################################
 
-$args{'-plottype'} = 'map';
 my $pgx = new lib::plotGeomaps(\%args);
 $pgx->{geomarkers} = $markers;
 $pgx->pgx_get_web_geomap();
