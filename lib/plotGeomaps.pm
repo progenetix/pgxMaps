@@ -99,7 +99,7 @@ sub pgx_get_web_geomap {
     
   	if ($m->{type} eq 'marker') {
     	push @markersJs, qq!
-L.marker([$m->{lat}, $m->{lon}]).bindPopup('$title').addTo(map)
+L.marker([$m->{lat}, $m->{lon}]).bindPopup('$title')
         ! }
     else {
     	my $radius 	= 	sprintf "%.0f", sqrt($m->{size} / 3.14 * $locsizeF);
@@ -112,15 +112,14 @@ L.circle([$m->{lat}, $m->{lon}], {
     fillOpacity: $pgx->{parameters}->{bubble_opacity},
     radius: $radius,
     count: $m->{size}
-}).bindPopup('$title').addTo(map)
+}).bindPopup('$title')
         !
       }  
   }
   
-  my $_markersJs 	= 	'' . join(';', @markersJs) . '';
+  my $_markersJs 	= 	join(",\n", @markersJs);
 
   $pgx->{map} = $pgx->{parameters}->{head};
-
   $pgx->{map} .= 	<< "__HTML__";
 
 <!-- map needs to exist before we load leaflet -->
@@ -131,6 +130,12 @@ L.circle([$m->{lat}, $m->{lon}], {
       integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
       crossorigin=""></script>
 <script>
+
+  var markers = [
+$_markersJs
+  ];
+  var markersGroup = L.featureGroup(markers);
+
   // Create the map.
   var map = L.map('map-canvas', { renderer: L.svg() } ).setView([$pgx->{parameters}->{latitude}, $pgx->{parameters}->{longitude}], $pgx->{parameters}->{zoom});
 
@@ -141,7 +146,9 @@ L.circle([$m->{lat}, $m->{lon}], {
       attribution: '$pgx->{parameters}->{attribution}'
   }).addTo(map);
 
-  $_markersJs;
+  map.addLayer(markersGroup);
+  map.fitBounds(markersGroup.getBounds().pad(0.05));
+
 </script>
 __HTML__
 
