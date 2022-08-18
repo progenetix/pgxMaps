@@ -1,9 +1,9 @@
 group_label	group_lat	group_lon	item_size	item_label	item_link	markerType
 # Label text, required	latitude, required	longitude, required	size parameter, e.g. count; will be summed up for all members of the same group; default 1	required if > 1 in group	optional (http://...)
-Swiss	47	8	50	Group 1	http://progenetix.org
-Swiss	47	8	60	Group 2	http://lifescienceszurich.ch
-Swiss	47	8	100	Group 3	http://uzh.ch
-Swiss	47	8	97	Another group	http://sib.swiss
+Swiss	47	8	50	Progenetix	http://progenetix.org
+Swiss	47	8	60	LSZGS 2	http://lifescienceszurich.ch
+Swiss	47	8	100	UZH	http://uzh.ch
+Swiss	47	8	97	SIB	http://sib.swiss
 Naima's birthplace	37.44	-122.14
 German	51	10	217		
 Italian	44	11	75		
