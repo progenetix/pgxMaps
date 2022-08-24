@@ -57,7 +57,6 @@ my @markers;
 
 # removing header line
 shift @$table;
-
  
 my $markers = {};
 
@@ -110,8 +109,6 @@ $pgx->pgx_get_web_geomap();
 
 print <<END;
 Content-type: text/html
-User-Agent: Mozilla/5.0
-
 
 
 <html>
