@@ -8,7 +8,6 @@ require Exporter;
 @EXPORT =   qw(
   new
   pgx_get_web_geomap
-  read_plot_defaults
 );
 
 ########    ####    ####    ####    ####    ####    ####    ####    ####    ####
@@ -19,18 +18,24 @@ sub new {
 
   my $class = shift;
   my $args = shift;
-  my $map_params = read_plot_defaults();
+
+  my $path_of_this_module = File::Basename::dirname( eval { ( caller() )[1] } );
+  my $defs = LoadFile($path_of_this_module.'/../config/config.yaml');
 
   foreach my $param (keys %{$args}) {
-    if (grep{/^$param$/} keys %{$map_params}) {
+    if (grep{/^$param$/} keys %{ $defs->{plot_params} }) {
       my $p_v = $args->{$param};
       if ($p_v =~ /\w/) {
-        $map_params->{$param} = $p_v }
+        $defs->{plot_params}->{$param} = $p_v }
     }
   }
 
+  foreach (keys %{$defs->{plot_params}}) {
+    $defs->{map_params}->{$_} = $defs->{plot_params}->{$_};
+  }
+
   my $self = {
-    parameters => $map_params,
+    parameters => $defs->{map_params},
     plotid => $map_params->{plotid},
     map => q{},
   };
@@ -56,10 +61,8 @@ sub _aggregate_geomarkers {
     push(@{$markers->{$m_k}->{items}}, $label);
     print Dumper($group, $label, $markers->{$m_k}->{size}, $markers->{$m_k}->{items});
   }
-  # print Dumper(%$markers);
 
 
-  # return $markers;
   return $pgx->{geomarkers};
 
 }
@@ -99,7 +102,7 @@ sub pgx_get_web_geomap {
     
   	if ($m->{type} eq 'marker') {
     	push @markersJs, qq!
-L.marker([$m->{lat}, $m->{lon}]).bindPopup('$title').addTo(map)
+L.marker([$m->{lat}, $m->{lon}]).bindPopup('$title')
         ! }
     else {
     	my $radius 	= 	sprintf "%.0f", sqrt($m->{size} / 3.14 * $locsizeF);
@@ -112,27 +115,32 @@ L.circle([$m->{lat}, $m->{lon}], {
     fillOpacity: $pgx->{parameters}->{bubble_opacity},
     radius: $radius,
     count: $m->{size}
-}).bindPopup('$title').addTo(map)
+}).bindPopup('$title')
         !
       }  
   }
   
-  my $_markersJs 	= 	'' . join(';', @markersJs) . '';
+  my $_markersJs 	= 	join(",\n", @markersJs);
 
   $pgx->{map} = $pgx->{parameters}->{head};
-
   $pgx->{map} .= 	<< "__HTML__";
 
 <!-- map needs to exist before we load leaflet -->
-<div id="map-canvas" style="width: $pgx->{parameters}->{canvas_w_px}px; height: $pgx->{parameters}->{canvas_h_px}px;"></div>
+<div id="$pgx->{parameters}->{id}" style="width: $pgx->{parameters}->{map_w_px}px; height: $pgx->{parameters}->{map_h_px}px;"></div>
 
 <!-- Make sure you put this AFTER Leaflet's CSS -->
 <script src="https://unpkg.com/leaflet\@1.8.0/dist/leaflet.js"
       integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
       crossorigin=""></script>
 <script>
+
+  var markers = [
+$_markersJs
+  ];
+  var markersGroup = L.featureGroup(markers);
+
   // Create the map.
-  var map = L.map('map-canvas', { renderer: L.svg() } ).setView([$pgx->{parameters}->{latitude}, $pgx->{parameters}->{longitude}], $pgx->{parameters}->{zoom});
+  var map = L.map('$pgx->{parameters}->{id}', { renderer: L.svg() } ).setView([$pgx->{parameters}->{latitude}, $pgx->{parameters}->{longitude}], $pgx->{parameters}->{zoom});
 
   L.tileLayer('$pgx->{parameters}->{tiles_source}', {
       minZoom: $pgx->{parameters}->{zoom_min},
@@ -141,21 +149,13 @@ L.circle([$m->{lat}, $m->{lon}], {
       attribution: '$pgx->{parameters}->{attribution}'
   }).addTo(map);
 
-  $_markersJs;
+  map.addLayer(markersGroup);
+  map.fitBounds(markersGroup.getBounds().pad(0.05));
+
 </script>
 __HTML__
 
   return $pgx;
-
-}
-
-################################################################################
-
-sub read_plot_defaults {
-
-  my $path_of_this_module = File::Basename::dirname( eval { ( caller() )[1] } );
-  my $plotPars = LoadFile($path_of_this_module.'/../config/config.yaml');
-  return $plotPars->{map_params};
 
 }
 
